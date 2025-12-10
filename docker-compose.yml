@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  yolov11-detection:
+    build: .
+    container_name: yolov11-detection
+    # For Hailo hardware access, you may need to run in privileged mode or with specific device access
+    # privileged: true  # Only enable if required for Hailo hardware access
+    devices:
+      # Add Hailo device access if needed (this is hardware-specific)
+      # - /dev/hailo:/dev/hailo
+      # Add any other necessary device mappings
+    volumes:
+      # Mount output directory to access results on host
+      - ./output:/app/output
+      # If you have custom models or input data
+      - ./src/data:/app/src/data
+      - ./src/models:/app/src/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    # For hardware access, you may need to run in host network mode
+    # network_mode: host
+    command: ["--help"]  # Default command, can be overridden
+
+  yolov11-detection-run:
+    build: .
+    container_name: yolov11-detection-run
+    # For Hailo hardware access, you may need to run in privileged mode or with specific device access
+    # Note: This is a sample run configuration, adjust based on your hardware requirements
+    devices:
+      # Add Hailo device access if needed (this is hardware-specific)
+      # - /dev/dri:/dev/dri  # For graphics acceleration if needed
+    volumes:
+      - ./output:/app/output
+      - ./src/data:/app/src/data
+      - ./src/models:/app/src/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true
+    command: ["-i", "src/data/bus.jpg", "-n", "src/models/yolov8n.hef"]

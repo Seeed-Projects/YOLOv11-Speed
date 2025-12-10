@@ -1,0 +1,106 @@
+# ==============================
+# Python 运行时文件
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==============================
+# 虚拟环境
+# ==============================
+# 强烈建议不要提交虚拟环境
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ==============================
+# IDE 和编辑器配置文件
+# ==============================
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-*
+
+# ==============================
+# 测试和覆盖率报告
+# ==============================
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ==============================
+# 项目特定文件
+# ==============================
+# 配置文件（按需添加）
+# config.ini
+# config.yaml
+# config.json
+
+# 数据库文件（如果使用 SQLite 等文件型数据库）
+*.db
+*.sqlite
+*.sqlite3
+
+# 密钥和敏感数据
+*.pem
+*.key
+*.secret
+secrets.py
+
+# ==============================
+# 操作系统生成的文件
+# ==============================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==============================
+# 日志文件
+# ==============================
+*.log
+*.log.*
+logs/
