@@ -8,14 +8,18 @@ import threading
 from functools import partial
 from types import SimpleNamespace
 import numpy as np
+import cv2
 
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+# Add src to path to allow imports when running as a script
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+
 from tracker.byte_tracker import BYTETracker
 from utils.hailo_inference import HailoInfer
 from utils.toolbox import init_input_source, get_labels, load_json_file, preprocess, visualize, FrameRateTracker
 from object_detection_post_process import inference_result_handler
+from speed_estimation import SpeedEstimationManager
 
 
 import argparse
@@ -34,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-n", "--net",
         type=str,
-        default="src/models/yolov8n.hef",
+        default="src/models/yolov11n.hef",
         help="Path to the network in HEF format."
     )
 
@@ -55,8 +59,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-l", "--labels",
         type=str,
-        default=str(Path(__file__).parent / "data" / "coco.txt"),
+        default=str(Path(__file__).parent / "config" / "coco.txt"),
         help="Path to label file (e.g., coco.txt). If not set, default COCO labels will be used."
+    )
+
+    parser.add_argument(
+        "--label",
+        type=str,
+        nargs='+',
+        default=["person", "car"],
+        help="Classes to detect and track with speed estimation. Default is ['person', 'car']. Example: --label bird car person"
     )
 
     parser.add_argument(
@@ -92,6 +104,33 @@ def parse_args() -> argparse.Namespace:
         help="Enable FPS measurement and display."
     )
 
+    parser.add_argument(
+        "--camera-width",
+        type=int,
+        default=640,
+        help="Camera resolution width (pixels). Default is 640."
+    )
+
+    parser.add_argument(
+        "--camera-height",
+        type=int,
+        default=480,
+        help="Camera resolution height (pixels). Default is 480."
+    )
+
+    parser.add_argument(
+        "--pixel-distance",
+        type=float,
+        default=0.01,  # Default: 1 cm per pixel
+        help="Real-world distance per pixel in meters. Default is 0.01 (1 cm/pixel)."
+    )
+
+    parser.add_argument(
+        "--speed-estimation",
+        action="store_true",
+        help="Enable speed estimation for tracked objects."
+    )
+
     args = parser.parse_args()
 
     # Validate paths
@@ -109,10 +148,15 @@ def parse_args() -> argparse.Namespace:
 
 def run_inference_pipeline(net, input, batch_size, labels, output_dir,
           save_stream_output=False, resolution="sd",
-          enable_tracking=False, show_fps=False) -> None:
+          enable_tracking=False, show_fps=False, camera_width=640, camera_height=480,
+          pixel_distance=0.01, speed_estimation=False, target_labels=None) -> None:
     """
     Initialize queues, HailoAsyncInference instance, and run the inference.
     """
+    # Set default target labels to person and car if none provided
+    if target_labels is None:
+        target_labels = ["person", "car"]
+
     labels = get_labels(labels)
     # Load config from the config directory - look for it in multiple potential locations
     possible_paths = [
@@ -147,9 +191,26 @@ def run_inference_pipeline(net, input, batch_size, labels, output_dir,
     input_queue = queue.Queue()
     output_queue = queue.Queue()
 
+    # Initialize speed estimation manager if needed
+    speed_manager = None
+    if speed_estimation and enable_tracking:
+        # Estimate FPS from video source
+        fps = 30.0  # Default FPS
+        if cap is not None:
+            video_fps = cap.get(cv2.CAP_PROP_FPS)
+            if video_fps > 0:
+                fps = video_fps
+        speed_manager = SpeedEstimationManager(pixel_distance=pixel_distance, fps=fps)
+    else:
+        speed_manager = None
+
+    # Prepare callback with additional parameters for speed estimation
     post_process_callback_fn = partial(
         inference_result_handler, labels=labels,
-        config_data=config_data, tracker=tracker
+        config_data=config_data, tracker=tracker,
+        camera_width=camera_width, camera_height=camera_height,
+        pixel_distance=pixel_distance, speed_estimation=speed_estimation,
+        speed_manager=speed_manager, target_labels=target_labels
     )
 
     hailo_inference = HailoInfer(net, batch_size)
@@ -261,7 +322,8 @@ def main() -> None:
     args = parse_args()
     run_inference_pipeline(args.net, args.input, args.batch_size, args.labels,
           args.output_dir, args.save_stream_output, args.resolution,
-          args.track, args.show_fps)
+          args.track, args.show_fps, args.camera_width, args.camera_height,
+          args.pixel_distance, args.speed_estimation, args.label)
 
 
 

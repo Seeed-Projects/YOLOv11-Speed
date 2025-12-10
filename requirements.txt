@@ -1,6 +1,10 @@
+# Core dependencies for YOLOv11 object detection and tracking
 loguru
 opencv-python
 numpy<2.0
 scipy
 lap
 cython_bbox
+
+# Dependencies for speed estimation and tracking
+# All required dependencies are already included above

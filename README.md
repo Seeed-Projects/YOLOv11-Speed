@@ -16,15 +16,14 @@ yolov11_speed/
 │   ├── object_detection_post_process.py # Post-processing functions
 │   ├── config/               # Configuration files
 │   │   ├── __init__.py
-│   │   └── config.json       # Detection and tracking parameters
-│   ├── data/                 # Sample data and labels
+│   │   ├── config.json       # Detection and tracking parameters
+│   │   └── coco.txt          # COCO dataset labels
+│   ├── data/                 # Sample data
 │   │   ├── __init__.py
-│   │   ├── coco.txt          # COCO dataset labels
 │   │   ├── bus.jpg           # Sample input image
 │   │   └── full_mov_slow.mp4 # Sample input video
 │   ├── models/               # HEF model files
 │   │   ├── __init__.py
-│   │   ├── yolov8n.hef       # YOLOv8 model
 │   │   └── yolov11n.hef      # YOLOv11 model
 │   ├── tracker/              # Object tracking modules
 │   │   ├── __init__.py
@@ -67,22 +66,32 @@ yolov11_speed/
 
 ### Run detection on a single image:
 ```bash
-python run_detection.py -i src/data/bus.jpg -n src/models/yolov8n.hef
+python run_detection.py -i src/data/bus.jpg -n src/models/yolov11n.hef
 ```
 
 ### Run detection with tracking:
 ```bash
-python run_detection.py -i src/data/bus.jpg -n src/models/yolov8n.hef --track
+python run_detection.py -i src/data/bus.jpg -n src/models/yolov11n.hef --track
 ```
 
 ### Run detection on a video:
 ```bash
-python run_detection.py -i src/data/full_mov_slow.mp4 -n src/models/yolov8n.hef
+python run_detection.py -i src/data/full_mov_slow.mp4 -n src/models/yolov11n.hef
 ```
 
 ### Run detection on camera stream:
 ```bash
-python run_detection.py -i camera -n src/models/yolov8n.hef --track
+python run_detection.py -i camera -n src/models/yolov11n.hef --track
+```
+
+### Run detection with custom labels (e.g., bird, car, person):
+```bash
+python run_detection.py -i camera -n src/models/yolov11n.hef --track --speed-estimation --label bird car person
+```
+
+### Run detection with default labels (person and car):
+```bash
+python run_detection.py -i camera -n src/models/yolov11n.hef --track --speed-estimation
 ```
 
 ## Configuration

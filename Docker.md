@@ -27,7 +27,7 @@ The Dockerfile creates a virtual environment with `--system-site-packages` which
 docker run --rm yolov11-detection
 
 # Run detection on sample image
-docker run --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov8n.hef
+docker run --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov11n.hef
 ```
 
 ### With Docker Compose
@@ -46,10 +46,10 @@ This project is designed to work with Hailo AI accelerators. To access Hailo har
 
 ```bash
 # Example with device access (adjust based on your Hailo setup)
-docker run --device=/dev/hailo*:/dev/hailo --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov8n.hef
+docker run --device=/dev/hailo*:/dev/hailo --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov11n.hef
 
 # Or with privileged access (use with caution)
-docker run --privileged --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov8n.hef
+docker run --privileged --rm -v $(pwd)/output:/app/output yolov11-detection -i src/data/bus.jpg -n src/models/yolov11n.hef
 ```
 
 ## Configuration

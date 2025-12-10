@@ -38,4 +38,4 @@ services:
       - PYTHONUNBUFFERED=1
     stdin_open: true
     tty: true
-    command: ["-i", "src/data/bus.jpg", "-n", "src/models/yolov8n.hef"]
+    command: ["-i", "src/data/bus.jpg", "-n", "src/models/yolov11n.hef"]

@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
 from utils.toolbox import id_to_color
+from speed_estimation import SpeedEstimationManager
+import time
 
 
-def inference_result_handler(original_frame, infer_results, labels, config_data, tracker=None):
+def inference_result_handler(original_frame, infer_results, labels, config_data,
+                            tracker=None, camera_width=640, camera_height=480,
+                            pixel_distance=0.01, speed_estimation=False, speed_manager=None,
+                            target_labels=None):
     """
     Processes inference results and draw detections (with optional tracking).
 
@@ -13,16 +18,32 @@ def inference_result_handler(original_frame, infer_results, labels, config_data,
         labels (list): List of class labels.
         enable_tracking (bool): Whether tracking is enabled.
         tracker (BYTETracker, optional): ByteTrack tracker instance.
+        camera_width (int): Camera resolution width in pixels.
+        camera_height (int): Camera resolution height in pixels.
+        pixel_distance (float): Real-world distance per pixel in meters.
+        speed_estimation (bool): Whether to enable speed estimation.
 
     Returns:
         np.ndarray: Frame with detections or tracks drawn.
     """
-    detections = extract_detections(original_frame, infer_results, config_data)  #should return dict with boxes, classes, scores
-    frame_with_detections = draw_detections(detections, original_frame, labels, tracker=tracker)
+    # Use the passed speed manager or create a new one if needed (fallback)
+    if speed_estimation and speed_manager is None and tracker is not None:
+        # Fallback: create a temporary speed manager if not passed
+        estimated_fps = 30.0  # Default FPS
+        speed_manager = SpeedEstimationManager(pixel_distance=pixel_distance, fps=estimated_fps)
+
+    # Set default target labels to person and car if none provided
+    if target_labels is None:
+        target_labels = ["person", "car"]
+
+    detections = extract_detections(original_frame, infer_results, config_data, labels, target_labels)  #should return dict with boxes, classes, scores
+    frame_with_detections = draw_detections(detections, original_frame, labels,
+                                          tracker=tracker, speed_manager=speed_manager,
+                                          target_labels=target_labels)
     return frame_with_detections
 
 
-def draw_detection(image: np.ndarray, box: list, labels: list, score: float, color: tuple, track=False):
+def draw_detection(image: np.ndarray, box: list, labels: list, score: float, color: tuple, track=False, speed=None):
     """
     Draw box and label for one detection.
 
@@ -33,13 +54,19 @@ def draw_detection(image: np.ndarray, box: list, labels: list, score: float, col
         score (float): Detection score.
         color (tuple): Color for the bounding box.
         track (bool): Whether to include tracking info.
+        speed (float): Speed in km/h, if available.
     """
     ymin, xmin, ymax, xmax = map(int, box)
     cv2.rectangle(image, (xmin, ymin), (xmax, ymax), color, 2)
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     # Compose texts
-    top_text = f"{labels[0]}: {score:.1f}%" if not track or len(labels) == 2 else f"{score:.1f}%"
+    # Include speed in the top text if available
+    if speed is not None:
+        top_text = f"{labels[0]}: {score:.1f}% {speed:.1f}km/h" if not track or len(labels) == 2 else f"{score:.1f}% {speed:.1f}km/h"
+    else:
+        top_text = f"{labels[0]}: {score:.1f}%" if not track or len(labels) == 2 else f"{score:.1f}%"
+
     bottom_text = None
 
     if track:
@@ -47,7 +74,6 @@ def draw_detection(image: np.ndarray, box: list, labels: list, score: float, col
             bottom_text = labels[1]
         else:
             bottom_text = labels[0]
-
 
     # Set colors
     text_color = (255, 255, 255)  # white
@@ -88,7 +114,7 @@ def denormalize_and_rm_pad(box: list, size: int, padding_length: int, input_heig
     return box
 
 
-def extract_detections(image: np.ndarray, detections: list, config_data) -> dict:
+def extract_detections(image: np.ndarray, detections: list, config_data, labels, target_labels=None) -> dict:
     """
     Extract detections from the input data.
 
@@ -96,10 +122,23 @@ def extract_detections(image: np.ndarray, detections: list, config_data) -> dict
         image (np.ndarray): Image to draw on.
         detections (list): Raw detections from the model.
         config_data (Dict): Loaded JSON config containing post-processing metadata.
+        labels (list): List of class labels.
+        target_labels (list): List of class names to detect.
 
     Returns:
         dict: Filtered detection results containing 'detection_boxes', 'detection_classes', 'detection_scores', and 'num_detections'.
     """
+
+    # Set default target labels to person and car if none provided
+    if target_labels is None:
+        target_labels = ["person", "car"]
+
+    # Define target class indices based on provided target labels
+    target_classes = set(target_labels)
+    target_class_indices = set()
+    for idx, label in enumerate(labels):
+        if label in target_classes:
+            target_class_indices.add(idx)
 
     visualization_params = config_data["visualization_params"]
     score_threshold = visualization_params.get("score_thres", 0.5)
@@ -114,16 +153,18 @@ def extract_detections(image: np.ndarray, detections: list, config_data) -> dict
     all_detections = []
 
     for class_id, detection in enumerate(detections):
-        for det in detection:
-            bbox, score = det[:4], det[4]
-            if score >= score_threshold:
-                denorm_bbox = denormalize_and_rm_pad(bbox, size, padding_length, img_height, img_width)
-                all_detections.append((score, class_id, denorm_bbox))
+        # Only process target class detections (pedestrians and cars)
+        if class_id in target_class_indices:
+            for det in detection:
+                bbox, score = det[:4], det[4]
+                if score >= score_threshold:
+                    denorm_bbox = denormalize_and_rm_pad(bbox, size, padding_length, img_height, img_width)
+                    all_detections.append((score, class_id, denorm_bbox))
 
     #sort all detections by score descending
     all_detections.sort(reverse=True, key=lambda x: x[0])
 
-    #take top max_boxes
+    #take top max_boxes (for pedestrians and cars only)
     top_detections = all_detections[:max_boxes]
 
     scores, class_ids, boxes = zip(*top_detections) if top_detections else ([], [], [])
@@ -136,7 +177,7 @@ def extract_detections(image: np.ndarray, detections: list, config_data) -> dict
     }
 
 
-def draw_detections(detections: dict, img_out: np.ndarray, labels, tracker=None):
+def draw_detections(detections: dict, img_out: np.ndarray, labels, tracker=None, speed_manager=None, target_labels=None):
     """
     Draw detections or tracking results on the image.
 
@@ -146,16 +187,46 @@ def draw_detections(detections: dict, img_out: np.ndarray, labels, tracker=None)
         labels (list): List of class labels.
         enable_tracking (bool): Whether to use tracker output (ByteTrack).
         tracker (BYTETracker, optional): ByteTrack tracker instance.
+        speed_manager (SpeedEstimationManager, optional): Speed estimation manager for speed calculation.
+        target_labels (list): List of class names to detect.
 
     Returns:
         np.ndarray: Annotated image.
     """
+
+    # Set default target labels to person and car if none provided
+    if target_labels is None:
+        target_labels = ["person", "car"]
+
+    # Define target class indices based on provided target labels
+    target_classes_set = set(target_labels)
+    target_class_indices = set()
+    for idx, label in enumerate(labels):
+        if label in target_classes_set:
+            target_class_indices.add(idx)
 
     #extract detection data from the dictionary
     boxes = detections["detection_boxes"]  # List of [xmin,ymin,xmaxm, ymax] boxes
     scores = detections["detection_scores"]  # List of detection confidences
     num_detections = detections["num_detections"]  # Total number of valid detections
     classes = detections["detection_classes"]  # List of class indices per detection
+
+    # Filter to only include pedestrian and car detections
+    target_boxes = []
+    target_scores = []
+    target_classes_filtered = []
+
+    for i in range(num_detections):
+        if classes[i] in target_class_indices:
+            target_boxes.append(boxes[i])
+            target_scores.append(scores[i])
+            target_classes_filtered.append(classes[i])
+
+    # Update the values to only include pedestrians and cars
+    boxes = target_boxes
+    scores = target_scores
+    classes = target_classes_filtered
+    num_detections = len(target_boxes)
 
     if tracker:
         dets_for_tracker = []
@@ -179,18 +250,29 @@ def draw_detections(detections: dict, img_out: np.ndarray, labels, tracker=None)
             x1, y1, x2, y2 = track.tlbr  #bounding box (top-left, bottom-right)
             xmin, ymin, xmax, ymax = map(int, [x1, y1, x2, y2])
             best_idx = find_best_matching_detection_index(track.tlbr, boxes)
-            color = tuple(id_to_color(classes[best_idx]).tolist())  # color based on class
-            if best_idx is None:
-                draw_detection(img_out, [xmin, ymin, xmax, ymax], f"ID {track_id}",
-                               track.score * 100.0, color, track=True)
-            else:
-                draw_detection(img_out, [xmin, ymin, xmax, ymax], [labels[classes[best_idx]], f"ID {track_id}"],
-                               track.score * 100.0, color, track=True)
+            if best_idx is not None:  # Only process if we found a matching detection
+                color = tuple(id_to_color(classes[best_idx]).tolist())  # color based on class
 
+                # Calculate and display speed if speed estimation is enabled
+                speed = None
+                if speed_manager is not None:
+                    bbox = [xmin, ymin, xmax, ymax]
+                    speed = speed_manager.estimate_speed(track_id, bbox)
+
+                # Get smoothed speed for display
+                display_speed = None
+                if speed_manager is not None and speed is not None:
+                    smoothed_speed = speed_manager.get_smoothed_speed(track_id)
+                    if smoothed_speed is not None:
+                        display_speed = smoothed_speed
+
+                # Only draw pedestrian detections with tracking info and speed
+                draw_detection(img_out, [xmin, ymin, xmax, ymax], [labels[classes[best_idx]], f"ID {track_id}"],
+                               track.score * 100.0, color, track=True, speed=display_speed)
 
 
     else:
-        #No tracking — draw raw model detections
+        #No tracking — draw raw model detections (only pedestrians and cars)
         for idx in range(num_detections):
             color = tuple(id_to_color(classes[idx]).tolist())  #color based on class
             draw_detection(img_out, boxes[idx], [labels[classes[idx]]], scores[idx] * 100.0, color)

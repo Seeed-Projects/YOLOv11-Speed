@@ -1,4 +1,5 @@
 import numpy as np
+from collections import deque
 
 from .kalman_filter import KalmanFilter
 from .matching import Matching
@@ -7,7 +8,7 @@ from .basetrack import BaseTrack, TrackState
 class STrack(BaseTrack):
 
     shared_kalman = KalmanFilter()
-    def __init__(self, tlwh, score):
+    def __init__(self, tlwh, score, max_history=30):
 
         # wait activate
         self._tlwh = np.asarray(tlwh, dtype=np.float64)
@@ -17,6 +18,16 @@ class STrack(BaseTrack):
 
         self.score = score
         self.tracklet_len = 0
+
+        # Store historical positions for speed calculation
+        self.position_history = deque(maxlen=max_history)
+        self.frame_history = deque(maxlen=max_history)
+
+        # Store the current center position
+        center_x = tlwh[0] + tlwh[2] / 2
+        center_y = tlwh[1] + tlwh[3] / 2
+        self.position_history.append((center_x, center_y))
+        self.frame_history.append(0)
 
     def predict(self):
         mean_state = self.mean.copy()
@@ -81,6 +92,12 @@ class STrack(BaseTrack):
         self.is_activated = True
 
         self.score = new_track.score
+
+        # Add current position to history
+        center_x = new_tlwh[0] + new_tlwh[2] / 2
+        center_y = new_tlwh[1] + new_tlwh[3] / 2
+        self.position_history.append((center_x, center_y))
+        self.frame_history.append(frame_id)
 
     @property
     # @jit(nopython=True)
@@ -178,7 +195,7 @@ class BYTETracker(object):
 
         if len(dets) > 0:
             '''Detections'''
-            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
+            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), s, self.args.track_buffer) for
                           (tlbr, s) in zip(dets, scores_keep)]
         else:
             detections = []
@@ -215,7 +232,7 @@ class BYTETracker(object):
         # association the untrack to the low score detections
         if len(dets_second) > 0:
             '''Detections'''
-            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
+            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), s, self.args.track_buffer) for
                           (tlbr, s) in zip(dets_second, scores_second)]
         else:
             detections_second = []
@@ -279,6 +296,22 @@ class BYTETracker(object):
         output_stracks = [track for track in self.tracked_stracks if track.is_activated]
 
         return output_stracks
+
+    def get_track_positions(self):
+        """Return current positions of all active tracks"""
+        positions = {}
+        for track in self.tracked_stracks:
+            if track.is_activated and track.state == TrackState.Tracked:
+                tlbr = track.tlbr
+                center_x = (tlbr[0] + tlbr[2]) / 2
+                center_y = (tlbr[1] + tlbr[3]) / 2
+                positions[track.track_id] = {
+                    'tlbr': tlbr,
+                    'center': (center_x, center_y),
+                    'position_history': list(track.position_history),
+                    'frame_history': list(track.frame_history)
+                }
+        return positions
 
 
 def joint_stracks(tlista, tlistb):

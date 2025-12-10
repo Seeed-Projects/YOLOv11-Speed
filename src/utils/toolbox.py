@@ -467,10 +467,13 @@ class FrameRateTracker:
         """Initialize the tracker with zero frames and no start time."""
         self._count = 0
         self._start_time = None
+        self._last_time = None
+        self._last_fps = None
 
     def start(self) -> None:
         """Start or restart timing and reset the frame count."""
         self._start_time = time.time()
+        self._last_time = self._start_time
 
     def increment(self, n: int = 1) -> None:
         """Increment the frame count.
@@ -479,6 +482,14 @@ class FrameRateTracker:
             n (int): Number of frames to add. Defaults to 1.
         """
         self._count += n
+        # Update last time for more accurate FPS calculation
+        current_time = time.time()
+        if self._last_time:
+            # Calculate instantaneous FPS
+            time_diff = current_time - self._last_time
+            if time_diff > 0:
+                self._last_fps = 1.0 / time_diff
+        self._last_time = current_time
 
 
     @property
@@ -504,6 +515,12 @@ class FrameRateTracker:
         """
         elapsed = self.elapsed
         return self._count / elapsed if elapsed > 0 else 0.0
+
+    def get_last_fps(self) -> float:
+        """Returns:
+            float: Instantaneous FPS based on the last frame interval.
+        """
+        return self._last_fps if self._last_fps is not None else self.fps
 
     def frame_rate_summary(self) -> str:
         """Return a summary of frame count and FPS.
