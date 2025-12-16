@@ -220,15 +220,14 @@
             display: flex;
             flex-direction: column;
             gap: 8px;  /* Further reduced gap */
-            flex: 1;  /* Allow it to grow equally with video */
-            min-width: 260px;
+            flex: 0 0 300px;  /* Take exactly 300px width, don't grow or shrink */
             height: 100%;
             overflow: hidden;  /* Prevent scrolling */
         }
 
         .video-section {
-            flex: 1;  /* Now equal to controls for same height */
-            min-width: 350px;  /* Reduced from 400px */
+            flex: 1;  /* Take remaining space */
+            min-width: 500px;  /* Increased minimum width for better video display */
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -489,6 +488,48 @@
             border-radius: 4px;  /* Further reduced from 6px */
         }
 
+        .hover-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .hover-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 0.8rem;
+            border: 1px solid #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
         .feature-info {
             display: flex;
             justify-content: space-around;
@@ -562,30 +603,39 @@
                 <div class="control-group">
                     <h3>Real-time Configuration</h3>
                     <div class="form-row">
-                        <label for="confidence">Confidence:</label>
+                        <div class="hover-tooltip">
+                            <label for="confidence">Confidence:&nbsp;</label>
+                            <span class="tooltip-text">Adjusts detection sensitivity in real-time</span>
+                        </div>
                         <input type="range" id="confidence" min="0" max="1" step="0.01" value="0.25">
                         <div class="value-display" id="confidenceValue">0.25</div>
                     </div>
-                    <div class="real-time-note">Adjusts detection sensitivity in real-time</div>
 
                     <div class="form-row">
-                        <label for="pixelDistance">Distance (mm):</label>
+                        <div class="hover-tooltip">
+                            <label for="pixelDistance">Distance (mm):&nbsp;</label>
+                            <span class="tooltip-text">Physical distance per pixel (mm)</span>
+                        </div>
                         <input type="number" id="pixelDistance" min="0.1" max="1000" step="0.1" value="10.0">
                     </div>
-                    <div class="real-time-note">Physical distance per pixel (mm)</div>
 
                     <div class="form-row">
-                        <label for="loiteringThreshold">Loitering Threshold (s):</label>
+                        <div class="hover-tooltip">
+                            <label for="loiteringThreshold">Loitering Threshold (s):&nbsp;</label>
+                            <span class="tooltip-text">Time threshold for loitering detection (seconds)</span>
+                        </div>
                         <input type="range" id="loiteringThreshold" min="1" max="60" step="1" value="10">
                         <div class="value-display" id="loiteringThresholdValue">10</div>
                     </div>
-                    <div class="real-time-note">Time threshold for loitering detection (seconds)</div>
                 </div>
 
                 <div class="control-group">
                     <h3>Feature Toggles</h3>
                     <div class="form-row">
-                        <label for="speedEstimationToggle">Speed Estimation:</label>
+                        <div class="hover-tooltip">
+                            <label for="speedEstimationToggle">Speed Estimation:&nbsp;</label>
+                            <span class="tooltip-text">Calculates and displays object speeds</span>
+                        </div>
                         <div class="toggle-container">
                             <label class="switch">
                                 <input type="checkbox" id="speedEstimationToggle" checked>
@@ -593,10 +643,12 @@
                             </label>
                         </div>
                     </div>
-                    <div class="real-time-note">Calculates and displays object speeds</div>
 
                     <div class="form-row">
-                        <label for="loiteringToggle">Loitering Detection:</label>
+                        <div class="hover-tooltip">
+                            <label for="loiteringToggle">Loitering Detection:&nbsp;</label>
+                            <span class="tooltip-text">Highlights objects present for extended periods (only for persons)</span>
+                        </div>
                         <div class="toggle-container">
                             <label class="switch">
                                 <input type="checkbox" id="loiteringToggle">
@@ -604,24 +656,25 @@
                             </label>
                         </div>
                     </div>
-                    <div class="real-time-note">Highlights objects present for extended periods (only for persons)</div>
                 </div>
 
                 <div class="control-group">
                     <h3>Target Configuration</h3>
                     <div class="form-row">
-                        <label for="targetLabels">Labels:</label>
+                        <div class="hover-tooltip">
+                            <label for="targetLabels">Labels:&nbsp;</label>
+                            <span class="tooltip-text">Comma-separated list of object classes</span>
+                        </div>
                         <input type="text" id="targetLabels" value="person, car" placeholder="e.g., person, car, bicycle">
                     </div>
-                    <div class="real-time-note">Comma-separated list of object classes</div>
 
                     <div class="form-row">
                         <label for="videoSource">Source:</label>
                         <select id="videoSource">
-                            <option value="camera">Live Camera</option>
-                            <option value="src/data/bus.jpg">Sample Image: Bus</option>
-                            <option value="src/data/full_mov_slow.mp4">Sample Video: Traffic</option>
+                            <option value="camera">Camera</option>
+                            <option value="">Video (Select file...)</option>
                         </select>
+                        <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
                     </div>
                 </div>
 
@@ -649,6 +702,7 @@
         const loiteringThresholdValue = document.getElementById('loiteringThresholdValue');
         const targetLabelsInput = document.getElementById('targetLabels');
         const videoSourceSelect = document.getElementById('videoSource');
+        const videoFileInput = document.getElementById('videoFileInput');
         const connectionDot = document.getElementById('connectionDot');
         const videoStreamImg = document.getElementById('videoStream');
 
@@ -708,8 +762,40 @@
             userEditedLabels = true;
         });
 
-        // Speed Estimation toggle doesn't need special handling since tracking
-        // is now automatically handled by the backend when needed
+        // Handle video source selection
+        videoSourceSelect.addEventListener('change', () => {
+            if (videoSourceSelect.value === "") { // Video option selected
+                // Show file dialog
+                videoFileInput.click();
+            }
+        });
+
+        // Handle video file selection
+        videoFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // Create a local URL for the selected video file
+                const videoUrl = URL.createObjectURL(file);
+                // Update the select to show the selected file
+                videoSourceSelect.value = videoUrl;
+
+                // Remove any previously added dynamic option
+                const existingOption = document.getElementById('selected-video-option');
+                if (existingOption) {
+                    existingOption.remove();
+                }
+
+                // Add a new option showing the selected file
+                const option = document.createElement('option');
+                option.id = 'selected-video-option';
+                option.value = videoUrl;
+                option.textContent = `Video: ${file.name}`;
+                videoSourceSelect.appendChild(option);
+
+                // Select the new option
+                videoSourceSelect.value = videoUrl;
+            }
+        });
 
 
         // Start detection button
@@ -729,35 +815,87 @@
         function startDetection() {
             startBtn.disabled = true;
 
-            fetch('/api/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    video_source: videoSourceSelect.value,
-                    confidence_threshold: parseFloat(confidenceSlider.value),
-                    pixel_distance_mm: parseFloat(pixelDistanceInput.value),
-                    enable_speed_estimation: speedEstimationToggle.checked,
-                    enable_loitering_detection: loiteringToggle.checked,
-                    loitering_threshold: parseFloat(loiteringThreshold.value),
-                    target_labels: targetLabelsInput.value.split(',').map(label => label.trim()).filter(label => label.length > 0)
+            // Check if the selected video source is a local file to be uploaded
+            const selectedOption = videoSourceSelect.options[videoSourceSelect.selectedIndex];
+            if (selectedOption.id === 'selected-video-option' && videoFileInput.files.length > 0) {
+                // Upload the file first
+                const file = videoFileInput.files[0];
+                const formData = new FormData();
+                formData.append('video_file', file);
+
+                fetch('/api/upload_video', {
+                    method: 'POST',
+                    body: formData
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Start response:', data);
-                // Reset the user edit flags since changes have been sent to backend
-                userEditedLabels = false;
-                userEditedLoitering = false;
-                userEditedLoiteringThreshold = false;
-                setTimeout(() => updateStatus(), 500); // Update status after start
-            })
-            .catch(error => {
-                console.error('Error starting detection:', error);
-                startBtn.disabled = false;
-                alert('Error starting detection: ' + error.message);
-            });
+                .then(resp => resp.json())
+                .then(uploadData => {
+                    if (uploadData.success) {
+                        // File uploaded successfully, now start detection with the uploaded path
+                        return fetch('/api/start', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                video_source: uploadData.file_path,
+                                confidence_threshold: parseFloat(confidenceSlider.value),
+                                pixel_distance_mm: parseFloat(pixelDistanceInput.value),
+                                enable_speed_estimation: speedEstimationToggle.checked,
+                                enable_loitering_detection: loiteringToggle.checked,
+                                loitering_threshold: parseFloat(loiteringThreshold.value),
+                                target_labels: targetLabelsInput.value.split(',').map(label => label.trim()).filter(label => label.length > 0)
+                            })
+                        });
+                    } else {
+                        throw new Error('File upload failed');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Start response:', data);
+                    // Reset the user edit flags since changes have been sent to backend
+                    userEditedLabels = false;
+                    userEditedLoitering = false;
+                    userEditedLoiteringThreshold = false;
+                    setTimeout(() => updateStatus(), 500); // Update status after start
+                })
+                .catch(error => {
+                    console.error('Error starting detection:', error);
+                    startBtn.disabled = false;
+                    alert('Error starting detection: ' + error.message);
+                });
+            } else {
+                // Use the selected value directly (for camera or existing server files)
+                fetch('/api/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        video_source: videoSourceSelect.value,
+                        confidence_threshold: parseFloat(confidenceSlider.value),
+                        pixel_distance_mm: parseFloat(pixelDistanceInput.value),
+                        enable_speed_estimation: speedEstimationToggle.checked,
+                        enable_loitering_detection: loiteringToggle.checked,
+                        loitering_threshold: parseFloat(loiteringThreshold.value),
+                        target_labels: targetLabelsInput.value.split(',').map(label => label.trim()).filter(label => label.length > 0)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Start response:', data);
+                    // Reset the user edit flags since changes have been sent to backend
+                    userEditedLabels = false;
+                    userEditedLoitering = false;
+                    userEditedLoiteringThreshold = false;
+                    setTimeout(() => updateStatus(), 500); // Update status after start
+                })
+                .catch(error => {
+                    console.error('Error starting detection:', error);
+                    startBtn.disabled = false;
+                    alert('Error starting detection: ' + error.message);
+                });
+            }
         }
 
         function stopDetection() {
@@ -831,7 +969,10 @@
                     if (!userEditedLabels) {
                         targetLabelsInput.value = data.config.target_labels.join(', ');
                     }
-                    videoSourceSelect.value = data.config.video_source;
+                    // Only update video source from backend if user hasn't selected a file
+                    if (!videoSourceSelect.querySelector('#selected-video-option')) {
+                        videoSourceSelect.value = data.config.video_source;
+                    }
 
                 }
             })

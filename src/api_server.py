@@ -59,6 +59,9 @@ def create_detection_pipeline(config):
     # Convert pixel distance from mm to m for the detection pipeline
     pixel_distance_m = config["pixel_distance_mm"] / 1000.0
 
+    # Initialize cap variable to avoid UnboundLocalError in finally block
+    cap = None
+
     try:
         # Get labels
         labels_path = "src/config/coco.txt"
@@ -558,6 +561,47 @@ def video_stream():
         generate_video_stream(),
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
+
+@app.route('/api/upload_video', methods=['POST'])
+def upload_video():
+    """Upload video file to the server."""
+    try:
+        if 'video_file' not in request.files:
+            return jsonify({"success": False, "error": "No video file provided"}), 400
+
+        file = request.files['video_file']
+
+        if file.filename == '':
+            return jsonify({"success": False, "error": "No file selected"}), 400
+
+        # Check if file has a valid video extension
+        allowed_extensions = {'mp4', 'avi', 'mov', 'mkv', 'm4v', 'wmv', 'flv', 'webm'}
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            return jsonify({"success": False, "error": "Invalid file type"}), 400
+
+        # Create videos directory if it doesn't exist
+        videos_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'videos')
+        os.makedirs(videos_dir, exist_ok=True)
+
+        # Save the file
+        filename = f"uploaded_{int(time.time())}_{file.filename}"
+        file_path = os.path.join(videos_dir, filename)
+        file.save(file_path)
+
+        # Return success with the file path relative to the project root
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Two levels up from src/api_server.py = project root
+        relative_path = os.path.relpath(file_path, project_root)
+
+        return jsonify({
+            "success": True,
+            "file_path": relative_path,
+            "message": "Video uploaded successfully"
+        })
+
+    except Exception as e:
+        print(f"Error uploading video: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route('/api/health')
 def health_check():
