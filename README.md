@@ -20,7 +20,7 @@ YOLOv11-Speed is a comprehensive real-time object detection, tracking, and speed
 
 |                                                reComputer AI Industrial R2135                                             |
 | :----------------------------------------------------------------------------------------------------------------: |
-| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/1/_/1_24_1.jpg) |
+| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/i/m/image-_r235.jpeg) |
 | [**Purchase Now**](https://www.seeedstudio.com/reComputer-AI-Industrial-R2135-12-p-6432.html?utm_source=PiAICourse&utm_medium=github&utm_campaign=Course) |
 
 |                                                reComputer Industrial R2045-12                                             |
