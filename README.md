@@ -82,10 +82,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💞 Top contributors:
 
-<a href="https://github.com/Seeed-Projects/Tutorial-of-AI-Kit-with-Raspberry-Pi-From-Zero-to-Hero/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Seeed-Projects/Tutorial-of-AI-Kit-with-Raspberry-Pi-From-Zero-to-Hero" alt="contrib.rocks image" />
+<a href="https://github.com/Seeed-Projects/YOLOv11-Hailo-Tracker/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Seeed-Projects/YOLOv11-Hailo-Tracker" alt="contrib.rocks image" />
 </a>
 
 ## 🌟 Star History
 
-![Star History Chart](https://api.star-history.com/svg?repos=Seeed-Projects/Tutorial-of-AI-Kit-with-Raspberry-Pi-From-Zero-to-Hero&type=Date)
+![Star History Chart](https://api.star-history.com/svg?repos=Seeed-Projects/YOLOv11-Hailo-Tracker&type=Date)
