@@ -53,11 +53,11 @@ YOLOv11-Hailo-Tracker is a comprehensive real-time object detection, tracking, a
 1. Install Hailo PCIe driver and PyHailoRT from the [Hailo website](https://hailo.ai/developer-zone/)
 2. Ensure your system has a compatible Hailo accelerator installed
 
-### Setup Steps
+### Option 1: Local Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/YOLOv11-Speed.git
-   cd YOLOv11-Speed
+   git clone https://github.com/Seeed-Projects/YOLOv11-Hailo-Tracker.git
+   cd YOLOv11-Hailo-Tracker
    ```
 
 2. Create a virtual environment (recommended):
@@ -79,6 +79,55 @@ YOLOv11-Hailo-Tracker is a comprehensive real-time object detection, tracking, a
 5. Access `localhost:5000` to reach the frontend and configure settings.
 
 ![alt text](./img/image.png)
+
+### Option 2: Docker Deployment
+
+#### Build and Run with Docker
+
+```bash
+# Build the Docker image with Hailo support
+docker build --build-arg HAILO_VERSION=4.23.0 -t yolov11-hailo-tracker .
+
+# Run the container
+docker run -p 8000:8000 yolov11-hailo-tracker
+```
+
+#### Using Pre-built Images
+
+Pre-built Docker images with Hailo support are available as GitHub Releases and on GitHub Container Registry:
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/seeed-projects/yolov11-hailo-tracker-hailo:latest
+
+# Run the container
+docker run -p 8000:8000 ghcr.io/seeed-projects/yolov11-hailo-tracker-hailo:latest
+```
+
+#### Build and Deploy with Docker Compose
+
+Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+services:
+  yolov11-hailo-tracker:
+    image: ghcr.io/seeed-projects/yolov11-hailo-tracker-hailo:latest
+    ports:
+      - "8000:8000"
+    devices:
+      - /dev:/dev  # For Hailo device access
+    volumes:
+      - ./videos:/app/videos  # Mount videos directory
+    environment:
+      - HAILORT_LOGGER_PATH=NONE
+```
+
+Then run:
+
+```bash
+docker-compose up -d
+```
 
 
 ## 🤝 Contributing
