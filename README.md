@@ -1,6 +1,6 @@
-# YOLOv11 Object Detection and Speed Estimation
+# YOLOv11 Hailo Tracker
 
-YOLOv11-Speed is a comprehensive real-time object detection, tracking, and speed estimation system optimized for Hailo AI accelerators. This project enables efficient detection of objects (with focus on persons and vehicles) with simultaneous tracking and speed calculation capabilities.
+YOLOv11-Hailo-Tracker is a comprehensive real-time object detection, tracking, and speed estimation system optimized for Hailo AI accelerators. This project enables efficient detection of objects (with focus on persons and vehicles) with simultaneous tracking and speed calculation capabilities.
 
 ## ✨ Features
 
@@ -13,8 +13,28 @@ YOLOv11-Speed is a comprehensive real-time object detection, tracking, and speed
 ## 🛠️ Requirements
 
 ### Hardware
-- Hailo AI accelerator (Hailo-8 or Hailo-10)
-- Compatible PCIe slot for Hailo card
+|                                                reComputer AI R2130                                              |
+| :----------------------------------------------------------------------------------------------------------------: |
+| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/1/_/1_24_1.jpg) |
+| [**Purchase Now**](https://www.seeedstudio.com/reComputer-AI-R2130-12-p-6368.html?utm_source=PiAICourse&utm_medium=github&utm_campaign=Course) |
+
+|                                                reComputer AI Industrial R2135                                             |
+| :----------------------------------------------------------------------------------------------------------------: |
+| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/i/m/image-_r235.jpeg) |
+| [**Purchase Now**](https://www.seeedstudio.com/reComputer-AI-Industrial-R2135-12-p-6432.html?utm_source=PiAICourse&utm_medium=github&utm_campaign=Course) |
+
+|                                                reComputer Industrial R2045-12                                             |
+| :----------------------------------------------------------------------------------------------------------------: |
+| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/1/-/1-recomputer-industrail-r2000_1.jpg) |
+| [**Purchase Now**](https://www.seeedstudio.com/reComputer-Industrial-R2045-12-p-6544.html?utm_source=PiAICourse&utm_medium=github&utm_campaign=Course) |
+
+
+|                                                reComputer Industrial R2045-12                                             |
+| :----------------------------------------------------------------------------------------------------------------: |
+| ![Raspberry Pi AI Kit](https://media-cdn.seeedstudio.com/media/catalog/product/cache/bb49d3ec4ee05b6f018e93f896b8a25d/i/m/image_6.jpg) |
+| [**Purchase Now**](https://www.seeedstudio.com/reComputer-Industrial-R2135-12-p-6547.html?utm_source=PiAICourse&utm_medium=github&utm_campaign=Course) |
+
+
 - Camera or video input (for streaming applications)
 
 ### Software
