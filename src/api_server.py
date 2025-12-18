@@ -22,7 +22,7 @@ is_running = False
 stop_event = threading.Event()  # Event to signal stop
 current_config = {
     "video_source": "camera",           # "camera" or video file path
-    "confidence_threshold": 0.25,       # 0.0 to 1.0 (can be updated while running)
+    "confidence_threshold": 0.5,       # 0.0 to 1.0 (can be updated while running)
     "pixel_distance_mm": 10.0,          # millimeters per pixel (can be updated in real-time)
     "enable_tracking": True,             # requires restart
     "enable_speed_estimation": True,     # requires restart
@@ -116,13 +116,14 @@ def create_detection_pipeline(config):
             with config_lock:
                 current_confidence = current_config["confidence_threshold"]
                 current_pixel_distance = current_config["pixel_distance_mm"] / 1000.0  # Convert to meters
+                current_target_labels = current_config.get("target_labels", ["person", "car"])
                 current_loitering_threshold = current_config.get("loitering_threshold", 10.0)
                 current_loitering_enabled = current_config.get("enable_loitering_detection", False)
 
             # Update loitering manager threshold if changed
-            loitering_manager.loitering_threshold = current_loitering_threshold
             fps_for_update = speed_manager.fps if speed_manager else 30.0
-            loitering_manager.frame_threshold = current_loitering_threshold * fps_for_update
+            loitering_manager.fps = fps_for_update  # Update the FPS used by the loitering manager
+            loitering_manager.loitering_threshold = current_loitering_threshold  # This will automatically update frame_threshold
 
             # Update config data with current confidence
             config_data = base_config_data.copy()
@@ -137,7 +138,7 @@ def create_detection_pipeline(config):
                 pixel_distance=current_pixel_distance,  # Use current pixel distance
                 speed_estimation=config["enable_speed_estimation"],
                 speed_manager=speed_manager,
-                target_labels=config["target_labels"],
+                target_labels=current_target_labels,
                 loitering_detection=current_loitering_enabled,
                 loitering_manager=loitering_manager,
                 loitering_threshold=current_loitering_threshold,
@@ -410,7 +411,7 @@ def update_config_realtime(config_updates):
     global current_config, last_config_update
 
     # These parameters can be updated in real-time
-    real_time_params = ['confidence_threshold', 'pixel_distance_mm']
+    real_time_params = ['confidence_threshold', 'pixel_distance_mm', 'target_labels']
 
     with config_lock:
         for param, value in config_updates.items():

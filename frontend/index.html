@@ -587,8 +587,8 @@
                             <label for="confidence">Confidence:&nbsp;</label>
                             <span class="tooltip-text">Adjusts detection sensitivity in real-time</span>
                         </div>
-                        <input type="range" id="confidence" min="0" max="1" step="0.01" value="0.25">
-                        <div class="value-display" id="confidenceValue">0.25</div>
+                        <input type="range" id="confidence" min="0" max="1" step="0.01" value="0.5">
+                        <div class="value-display" id="confidenceValue">0.5</div>
                     </div>
 
                     <div class="form-row">
@@ -689,7 +689,8 @@
         let userEditedLabels = false;
         let userEditedLoitering = false;
         let userEditedLoiteringThreshold = false;
-        
+        let userEditedSpeedEstimation = false;
+
 
         // Update confidence value display
         confidenceSlider.addEventListener('input', () => {
@@ -724,6 +725,12 @@
             userEditedLoiteringThreshold = true;
             loiteringThresholdValue.textContent = loiteringThreshold.value;
             updateRealtimeConfig('loitering_threshold', parseFloat(loiteringThreshold.value));
+        });
+
+        // Update speed estimation toggle
+        speedEstimationToggle.addEventListener('change', () => {
+            userEditedSpeedEstimation = true;
+            updateRealtimeConfig('enable_speed_estimation', speedEstimationToggle.checked);
         });
 
         // Update loitering detection toggle
@@ -836,6 +843,7 @@
                     userEditedLabels = false;
                     userEditedLoitering = false;
                     userEditedLoiteringThreshold = false;
+                    userEditedSpeedEstimation = false;
                     setTimeout(() => updateStatus(), 500); // Update status after start
                 })
                 .catch(error => {
@@ -867,6 +875,7 @@
                     userEditedLabels = false;
                     userEditedLoitering = false;
                     userEditedLoiteringThreshold = false;
+                    userEditedSpeedEstimation = false;
                     setTimeout(() => updateStatus(), 500); // Update status after start
                 })
                 .catch(error => {
@@ -890,6 +899,7 @@
                 userEditedLabels = false;
                 userEditedLoitering = false;
                 userEditedLoiteringThreshold = false;
+                userEditedSpeedEstimation = false;
                 setTimeout(() => updateStatus(), 500); // Update status after stop
             })
             .catch(error => {
@@ -929,12 +939,17 @@
                 startBtn.disabled = data.running;
                 stopBtn.disabled = !data.running;
 
-                // Update form fields based on the config if stopped
+                // Update form fields based on the config if stopped, but preserve user changes
                 if (!data.running) {
                     confidenceSlider.value = data.config.confidence_threshold;
                     confidenceValue.textContent = parseFloat(data.config.confidence_threshold).toFixed(2);
                     pixelDistanceInput.value = data.config.pixel_distance_mm;
-                    speedEstimationToggle.checked = data.config.enable_speed_estimation;
+
+                    // Only update speed estimation toggle if user hasn't edited it
+                    if (!userEditedSpeedEstimation) {
+                        speedEstimationToggle.checked = data.config.enable_speed_estimation;
+                    }
+
                     // Only update loitering detection from backend if user hasn't edited it
                     if (!userEditedLoitering) {
                         loiteringToggle.checked = data.config.enable_loitering_detection;

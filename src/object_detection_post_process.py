@@ -18,10 +18,43 @@ class LoiteringDetectionManager:
             loitering_threshold (float): Time threshold in seconds for loitering detection
             fps (float): Frames per second of the video stream
         """
-        self.loitering_threshold = loitering_threshold  # seconds
-        self.frame_threshold = loitering_threshold * fps  # convert to frames
+        self._loitering_threshold = loitering_threshold  # seconds
+        self._fps = fps  # Store fps for dynamic updates
+        self._frame_threshold = loitering_threshold * fps  # convert to frames
         self.track_start_frames = defaultdict(int)  # track_id -> start frame number
+        self.track_start_times = defaultdict(float)  # track_id -> start timestamp
         self.current_frame = 0
+
+    @property
+    def loitering_threshold(self):
+        return self._loitering_threshold
+
+    @loitering_threshold.setter
+    def loitering_threshold(self, value):
+        self._loitering_threshold = value
+        # Automatically update frame threshold when loitering threshold changes
+        self._frame_threshold = value * self.fps
+
+    @property
+    def frame_threshold(self):
+        return self._frame_threshold
+
+    @frame_threshold.setter
+    def frame_threshold(self, value):
+        self._frame_threshold = value
+        # Also update the loitering threshold based on the new frame threshold and FPS
+        if self._fps > 0:
+            self._loitering_threshold = value / self._fps
+
+    @property
+    def fps(self):
+        return self._fps
+
+    @fps.setter
+    def fps(self, value):
+        self._fps = value
+        # Automatically update frame threshold when fps changes
+        self._frame_threshold = self._loitering_threshold * value
 
     def update_frame_count(self):
         """Increment the current frame number"""
@@ -29,13 +62,14 @@ class LoiteringDetectionManager:
 
     def update_track(self, track_id):
         """
-        Update the start frame for a track ID if it's not already being tracked
+        Update the start frame and timestamp for a track ID if it's not already being tracked
 
         Args:
             track_id: Unique identifier for the tracked object
         """
         if track_id not in self.track_start_frames:
             self.track_start_frames[track_id] = self.current_frame
+            self.track_start_times[track_id] = time.time()
 
     def is_loitering(self, track_id):
         """
@@ -50,8 +84,10 @@ class LoiteringDetectionManager:
         if track_id not in self.track_start_frames:
             return False
 
-        frames_present = self.current_frame - self.track_start_frames[track_id]
-        return frames_present > self.frame_threshold
+        # Use time-based calculation for more accurate loitering detection
+        current_time = time.time()
+        time_elapsed = current_time - self.track_start_times[track_id]
+        return time_elapsed > self._loitering_threshold
 
     def cleanup_missing_tracks(self, current_track_ids):
         """
@@ -68,6 +104,7 @@ class LoiteringDetectionManager:
 
         for track_id in ids_to_remove:
             del self.track_start_frames[track_id]
+            del self.track_start_times[track_id]
 
 
 def inference_result_handler(original_frame, infer_results, labels, config_data,
