@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [linux/arm/v7, linux/arm64]
+        platform: [linux/arm/v7, linux/arm64]  # Only ARM platforms
 
     steps:
     - name: Checkout code
@@ -31,7 +31,6 @@ jobs:
       with:
         driver-opts: network=host
 
-    # Retry mechanism implemented with a loop
     - name: Build, test, and retry if needed for ${{ matrix.platform }}
       run: |
         MAX_RETRIES=3
@@ -123,7 +122,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64, linux/arm/v7]
+        platform: [linux/arm64, linux/arm/v7]  # Only ARM platforms
 
     steps:
     - name: Checkout code
@@ -188,17 +187,6 @@ jobs:
       id: tag
       run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
-    - name: Build Docker image locally for AMD64
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        load: true
-        tags: yolov11-hailo-${{ steps.tag.outputs.tag }}:amd64
-        build-args: |
-          HAILO_VERSION=${{ env.HAILO_VERSION }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
     - name: Build Docker image locally for ARM64
       uses: docker/build-push-action@v5
       with:
@@ -225,10 +213,6 @@ jobs:
         cache-to: type=gha,mode=max
         outputs: type=docker,dest=/tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-armv7.tar
 
-    - name: Save AMD64 image
-      run: |
-        docker save yolov11-hailo-${{ steps.tag.outputs.tag }}:amd64 -o /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-amd64.tar
-
     - name: Save ARM64 image
       run: |
         docker save yolov11-hailo-${{ steps.tag.outputs.tag }}:arm64 -o /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-arm64.tar
@@ -239,24 +223,8 @@ jobs:
 
     - name: Compress Docker images
       run: |
-        gzip /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-amd64.tar
         gzip /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-arm64.tar
         gzip /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-armv7.tar
 
     - name: Create Release and Upload Assets
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.tag.outputs.tag }}
-        name: Release ${{ steps.tag.outputs.tag }}
-        body: |
-          Docker images for YOLOv11 with Hailo support for Python 3.13 on Raspberry Pi
-
-          - AMD64 Docker image: yolov11-hailo-${{ steps.tag.outputs.tag }}-amd64.tar.gz
-          - ARM64 Docker image: yolov11-hailo-${{ steps.tag.outputs.tag }}-arm64.tar.gz
-          - ARMv7 Docker image: yolov11-hailo-${{ steps.tag.outputs.tag }}-armv7.tar.gz
-        files: |
-          /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-amd64.tar.gz
-          /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-arm64.tar.gz
-          /tmp/yolov11-hailo-${{ steps.tag.outputs.tag }}-armv7.tar.gz
-        draft: false
-        prerelease: false
+      uses: soft
