@@ -4,7 +4,7 @@
 # Stage 1: build hailort
 ############################
 ARG BUILDPLATFORM
-FROM --platform=$BUILDPLATFORM python:3.13-slim AS build
+FROM python:3.13-slim AS build
 
 ARG HAILO_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
