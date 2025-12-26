@@ -1,13 +1,10 @@
-name: Build Hailo YOLO arm64 Image
+name: Build Hailo YOLO arm64 Image (Multi-Version)
 
 on:
   push:
     branches: [main, master]
     tags: ['v*.*.*']
   pull_request:
-
-env:
-  HAILO_VERSION: "4.23.0"
 
 jobs:
   build-and-push:
@@ -16,14 +13,17 @@ jobs:
       contents: read
       packages: write
 
+    strategy:
+      # 核心修复：矩阵编译 4.20.0 到 4.23.0
+      matrix:
+        hailo_version: ["4.20.0", "4.21.0", "4.22.0", "4.23.0"]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- 关键修复：将仓库名转换为小写并存入环境变量 ---
       - name: Prepare Image Name
         run: |
-          # 使用 tr 命令将大写转换为小写
           LOWER_IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}-hailo" | tr '[:upper:]' '[:lower:]')
           echo "GHCR_IMAGE=${LOWER_IMAGE_NAME}" >> $GITHUB_ENV
 
@@ -47,16 +47,15 @@ jobs:
           context: .
           platforms: linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          # 使用转换后的小写环境变量 ${{ env.GHCR_IMAGE }}
+          # 动态标签：例如 :4.20.0，如果是 4.23.0 则额外打上 :latest
           tags: |
-            ${{ env.GHCR_IMAGE }}:latest
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:${{ matrix.hailo_version }}
+            ${{ matrix.hailo_version == '4.23.0' && format('{0}:latest', env.GHCR_IMAGE) || '' }}
           build-args: |
-            BUILDPLATFORM=linux/amd64
             TARGETPLATFORM=linux/arm64
-            HAILO_VERSION=${{ env.HAILO_VERSION }}
+            HAILO_VERSION=${{ matrix.hailo_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Summary
-        run: echo "Successfully built and pushed ${{ env.GHCR_IMAGE }} for arm64"
+        run: echo "Successfully built ${{ env.GHCR_IMAGE }}:${{ matrix.hailo_version }}"
