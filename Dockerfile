@@ -73,4 +73,4 @@ EXPOSE 5000
 
 # 5. 设置启动指令，防止进入 Python 交互界面
 # 假设您的入口文件是项目根目录下的 app.py
-CMD ["python3", "app.py"]
+CMD ["python3", "run_api.py"]
