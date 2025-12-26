@@ -39,7 +39,7 @@ YOLOv11-Hailo-Tracker is a comprehensive real-time object detection, tracking, a
 
 ### Software
 - **Python**: 3.8 or higher
-- **HailoRT**: Version 4.22.0 or compatible
+- **HailoRT**: Version 4.23.0
 - **Dependencies**: Listed in `requirements.txt`
 
 ### System Dependencies
