@@ -89,7 +89,7 @@ YOLOv11-Hailo-Tracker is a comprehensive real-time object detection, tracking, a
 docker build --build-arg HAILO_VERSION=4.23.0 -t yolov11-hailo-tracker .
 
 # Run the container
-docker run -p 8000:8000 yolov11-hailo-tracker
+docker run -it --rm   -p 8000:8000   --privileged   --device /dev/hailo0:/dev/hailo0   -v /dev:/dev   yolov11-hailo-tracker
 ```
 
 #### Using Pre-built Images
